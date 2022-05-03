@@ -1,0 +1,12 @@
+triggers:
+  openapi-watchlist-1:
+    name: get-stockquote
+    parameters:
+      method: get-stockquote
+    enabled: true
+    invoke:
+      flow: get-stockquote
+      parameters:
+        request: $.request
+        config: $.config
+        env: $.env

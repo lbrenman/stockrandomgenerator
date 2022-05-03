@@ -1,0 +1,170 @@
+{
+	"schemaVersion": "4",
+	"info": {
+		"name": "get-stockquote"
+	},
+	"parameter": {
+		"properties": {
+			"request": {
+				"description": "The request"
+			},
+			"config": {
+				"type": "object",
+				"description": "The service's configuration"
+			},
+			"env": {
+				"type": "object",
+				"description": "The host OS environment"
+			}
+		},
+		"additionalProperties": false
+	},
+	"start": "stockrandconfig.1",
+	"nodes": {
+		"javascript.1": {
+			"type": "nodehandler://@axway/api-builder-plugin-fn-javascript/javascript",
+			"name": "setResponse",
+			"method": "Execute",
+			"parameters": [
+				{
+					"name": "data",
+					"type": "jsonpath",
+					"value": "$",
+					"metaName": "Data",
+					"metaDescription": "The value to apply as the `data` argument of the JavaScript code. For objects and arrays, `data` is passed by reference."
+				},
+				{
+					"name": "code",
+					"type": "string",
+					"value": "\"console.log(data.dataConfig);\\n  \\n  function randBetweenMinMax(min, max) {\\n  \\treturn Math.floor(Math.random() * (max - min + 1) + min);\\n  }\\n  \\n  if(data.dataConfig.firstRun) {\\n    // unset firstRun\\n    data.dataConfig.firstRun = false;\\n    data.dataConfig.numRuns = 0;\\n    data.dataConfig.intervalVal = randBetweenMinMax(data.dataConfig.intervalMin,data.dataConfig.intervalMax);\\n    data.dataConfig.dataVal = randBetweenMinMax(data.dataConfig.dataMin,data.dataConfig.dataMax);\\n  }\\n  \\n  let counter = data.dataConfig.numRuns;\\n  let value = data.dataConfig.dataVal;\\n  counter++;\\n  \\n  if(counter >= data.dataConfig.intervalVal) {\\n    // set new values and reset numRuns\\n    data.dataConfig.numRuns = 0;\\n    data.dataConfig.intervalVal = randBetweenMinMax(data.dataConfig.intervalMin,data.dataConfig.intervalMax);\\n    data.dataConfig.dataVal = randBetweenMinMax(data.dataConfig.dataMin,data.dataConfig.dataMax);\\n  } else {\\n    data.dataConfig.numRuns = counter;\\n  }\\n  \\n  return {\\n  \\t\\\"symbol\\\": data.request.query.symbol,\\n  \\t\\\"lastPrice\\\": value\\n  };\""
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.result",
+					"routes": [
+						"stockrandconfig.2"
+					],
+					"metaName": "Next"
+				},
+				"error": {
+					"context": "$.error",
+					"routes": [],
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Execute"
+		},
+		"http.1": {
+			"type": "nodehandler://axway-flow/http",
+			"name": "Set HTTP Response",
+			"method": "setresponse",
+			"parameters": [
+				{
+					"name": "status",
+					"type": "number",
+					"value": "200",
+					"metaName": "Status",
+					"metaDescription": "The HTTP status code"
+				},
+				{
+					"name": "body",
+					"type": "jsonpath",
+					"value": "$.result",
+					"metaName": "Body",
+					"metaDescription": "The response payload"
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.response",
+					"routes": [],
+					"metaName": "Next"
+				}
+			},
+			"metaMethod": "Set HTTP Response"
+		},
+		"stockrandconfig.1": {
+			"type": "nodehandler://api-builder-flow-invoke/model/mongo/stockrandconfig",
+			"name": "Get Config",
+			"method": "findAll",
+			"parameters": [],
+			"outputs": {
+				"next": {
+					"routes": [
+						"setcontext.1"
+					],
+					"context": "$.foundAll",
+					"metaName": "Next"
+				},
+				"error": {
+					"routes": [],
+					"context": "$.error",
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Find all"
+		},
+		"setcontext.1": {
+			"type": "nodehandler://axway-flow/setcontext",
+			"name": "Set Context",
+			"method": "setcontext",
+			"parameters": [
+				{
+					"name": "value",
+					"type": "jsonpath",
+					"value": "$.foundAll[0]",
+					"metaName": "Value"
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.dataConfig",
+					"routes": [
+						"javascript.1"
+					],
+					"metaName": "Next"
+				}
+			},
+			"metaMethod": "Set Context"
+		},
+		"stockrandconfig.2": {
+			"type": "nodehandler://api-builder-flow-invoke/model/mongo/stockrandconfig",
+			"name": "Update Config",
+			"method": "update",
+			"parameters": [
+				{
+					"name": "data",
+					"type": "jsonpath",
+					"value": "$.dataConfig",
+					"metaName": "data"
+				},
+				{
+					"name": "id",
+					"type": "jsonpath",
+					"value": "$.dataConfig.id",
+					"metaName": "id"
+				}
+			],
+			"outputs": {
+				"next": {
+					"routes": [
+						"http.1"
+					],
+					"context": "$.updated",
+					"metaName": "Next"
+				},
+				"notfound": {
+					"routes": [],
+					"metaName": "Not Found"
+				},
+				"error": {
+					"routes": [],
+					"context": "$.error",
+					"metaName": "Error"
+				}
+			},
+			"metaMethod": "Update"
+		}
+	}
+}
