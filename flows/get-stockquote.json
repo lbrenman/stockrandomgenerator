@@ -36,7 +36,9 @@
 				{
 					"name": "code",
 					"type": "string",
-					"value": "\"console.log(data.dataConfig);\\n  \\n  function randBetweenMinMax(min, max) {\\n  \\treturn Math.floor(Math.random() * (max - min + 1) + min);\\n  }\\n  \\n  if(data.dataConfig.firstRun) {\\n    // unset firstRun\\n    data.dataConfig.firstRun = false;\\n    data.dataConfig.numRuns = 0;\\n    data.dataConfig.intervalVal = randBetweenMinMax(data.dataConfig.intervalMin,data.dataConfig.intervalMax);\\n    data.dataConfig.dataVal = randBetweenMinMax(data.dataConfig.dataMin,data.dataConfig.dataMax);\\n  }\\n  \\n  let counter = data.dataConfig.numRuns;\\n  let value = data.dataConfig.dataVal;\\n  counter++;\\n  \\n  if(counter >= data.dataConfig.intervalVal) {\\n    // set new values and reset numRuns\\n    data.dataConfig.numRuns = 0;\\n    data.dataConfig.intervalVal = randBetweenMinMax(data.dataConfig.intervalMin,data.dataConfig.intervalMax);\\n    data.dataConfig.dataVal = randBetweenMinMax(data.dataConfig.dataMin,data.dataConfig.dataMax);\\n  } else {\\n    data.dataConfig.numRuns = counter;\\n  }\\n  \\n  return {\\n  \\t\\\"symbol\\\": data.request.query.symbol,\\n  \\t\\\"lastPrice\\\": value\\n  };\""
+					"value": "\"console.log(data.dataConfig);\\n  \\n  function randBetweenMinMax(min, max) {\\n  \\treturn Math.floor(Math.random() * (max - min + 1) + min);\\n  }\\n  \\n  if(data.dataConfig.firstRun) {\\n    // unset firstRun\\n    data.dataConfig.firstRun = false;\\n    data.dataConfig.numRuns = 0;\\n    data.dataConfig.intervalVal = randBetweenMinMax(data.dataConfig.intervalMin,data.dataConfig.intervalMax);\\n    data.dataConfig.dataVal = randBetweenMinMax(data.dataConfig.dataMin,data.dataConfig.dataMax);\\n  }\\n  \\n  let counter = data.dataConfig.numRuns;\\n  let value = data.dataConfig.dataVal;\\n  counter++;\\n  \\n  if(counter >= data.dataConfig.intervalVal) {\\n    // set new values and reset numRuns\\n    data.dataConfig.numRuns = 0;\\n    data.dataConfig.intervalVal = randBetweenMinMax(data.dataConfig.intervalMin,data.dataConfig.intervalMax);\\n    data.dataConfig.dataVal = randBetweenMinMax(data.dataConfig.dataMin,data.dataConfig.dataMax);\\n  } else {\\n    data.dataConfig.numRuns = counter;\\n  }\\n  \\n  return {\\n  \\t\\\"symbol\\\": data.request.query.symbol,\\n  \\t\\\"lastPrice\\\": value\\n  };\"",
+					"metaName": "Code",
+					"metaDescription": "A JavaScript function body. Supports `await` and returning promises. `data` is the value of the Data parameter. `logger` is the API Builder logger. See the docs for more info: https://docs.axway.com/bundle/api-builder/page/docs/developer_guide/flows/flow_nodes/javascript_flow_node/index.html"
 				}
 			],
 			"outputs": {
@@ -49,7 +51,9 @@
 				},
 				"error": {
 					"context": "$.error",
-					"routes": [],
+					"routes": [
+						"http.2"
+					],
 					"metaName": "Error"
 				}
 			},
@@ -57,7 +61,7 @@
 		},
 		"http.1": {
 			"type": "nodehandler://axway-flow/http",
-			"name": "Set HTTP Response",
+			"name": "Set Success HTTP Response",
 			"method": "setresponse",
 			"parameters": [
 				{
@@ -98,7 +102,9 @@
 					"metaName": "Next"
 				},
 				"error": {
-					"routes": [],
+					"routes": [
+						"http.2"
+					],
 					"context": "$.error",
 					"metaName": "Error"
 				}
@@ -155,7 +161,9 @@
 					"metaName": "Next"
 				},
 				"notfound": {
-					"routes": [],
+					"routes": [
+						"http.2"
+					],
 					"metaName": "Not Found"
 				},
 				"error": {
@@ -165,6 +173,29 @@
 				}
 			},
 			"metaMethod": "Update"
+		},
+		"http.2": {
+			"type": "nodehandler://axway-flow/http",
+			"name": "Set Error HTTP Response",
+			"method": "setresponse",
+			"parameters": [
+				{
+					"name": "status",
+					"type": "number",
+					"value": "400"
+				},
+				{
+					"name": "body",
+					"type": "string",
+					"value": "\"\\\"Error\\\"\""
+				}
+			],
+			"outputs": {
+				"next": {
+					"context": "$.response",
+					"routes": []
+				}
+			}
 		}
 	}
 }
